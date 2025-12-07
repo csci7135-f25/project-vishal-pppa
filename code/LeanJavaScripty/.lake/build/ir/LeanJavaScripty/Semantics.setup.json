@@ -1,0 +1,8 @@
+{"plugins": [],
+ "options": {},
+ "name": "LeanJavaScripty.Semantics",
+ "isModule": false,
+ "importArts":
+ {"LeanJavaScripty.Syntax":
+  ["/Users/VishalVunnam/Desktop/Classes/Program Analysis/project-vishal-pppa/code/LeanJavaScripty/.lake/build/lib/lean/LeanJavaScripty/Syntax.olean"]},
+ "dynlibs": []}
