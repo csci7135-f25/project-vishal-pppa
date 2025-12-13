@@ -3,14 +3,11 @@ import LeanJavaScripty.Semantics
 import LeanJavaScripty.LLMGuide
 import LeanJavaScripty.Slicer
 
--- Abstract state maps variables to abstract values
 abbrev AbsState := String → AbsVal
 
--- Update abstract state with a new value for variable x
 def AbsState.update (s : AbsState) (x : String) (v : AbsVal) : AbsState :=
     fun y => if y == x then v else s y
 
--- Empty abstract state (all variables map to bottom)
 def AbsState.empty : AbsState := fun _ => AbsVal.bottom
 
 -- evalAbs takes an expression and an abstract state and returns an abstract value
@@ -24,16 +21,13 @@ def evalAbs (ρ : AbsState) (e: Expr) : AbsVal := match e with
         | .num i1, .num i2 => .num (Interval.sub i1 i2)
         | _, _ => .top -- type mismatch
 
--- Pure widening: widen upper bound to +∞ if increasing, lower bound to -∞ if decreasing
 def AbsVal.widen (old new : AbsVal) : AbsVal := match old, new with
     | .num i1, .num i2 => .num (Interval.widen i1 i2)
     | _, _ => .top
 
--- Check equality of two abstract states for a set of variables
 def AbsState.eq_decidable (s1 s2 : AbsState) (vars : List String) : Bool :=
     vars.all (fun x => (s1 x).eq_decidable (s2 x))
 
--- Pure exec function with automatic widening (for traditional analysis)
 partial def exec (stmt : Stmt) (s: AbsState) : AbsState := match stmt with
     | Stmt._skip => s
     | Stmt._assign x e =>
@@ -43,25 +37,21 @@ partial def exec (stmt : Stmt) (s: AbsState) : AbsState := match stmt with
         let s' := exec s1 s
         exec s2 s'
     | Stmt._if_else _b s1 s2 =>
-        -- Join both branches (path insensitive)
         let s_true := exec s1 s
         let s_false := exec s2 s
         fun x => (s_true x).join (s_false x)
     | Stmt._while _b body =>
         let rec loop (oldState : AbsState) (fuel : Nat) : AbsState := match fuel with
-        | 0 => oldState  -- Stop if out of fuel
+        | 0 => oldState
         | Nat.succ fuel' =>
             let bodyState := exec body oldState
             -- Join with old state and apply widening
             let newState : AbsState := fun x =>
                 let joined := (oldState x).join (bodyState x)
                 (oldState x).widen joined
-            -- Widening guarantees convergence in finite steps
             loop newState (fuel' - 1)
-        loop s 5  -- 3 iterations is enough for widening to stabilize
-
--- Pure exec function WITHOUT automatic widening (for LLM-guided analysis)
--- Only pure joins (min/max), no widening - LLM decides what to widen
+        loop s 5
+-- Execute without any widening (for debugging/fixed-point checking)
 partial def execNoWiden (stmt : Stmt) (s: AbsState) : AbsState := match stmt with
     | Stmt._skip => s
     | Stmt._assign x e =>
@@ -76,14 +66,11 @@ partial def execNoWiden (stmt : Stmt) (s: AbsState) : AbsState := match stmt wit
         let s_false := execNoWiden s2 s
         fun x => (s_true x).pureJoin (s_false x)
     | Stmt._while _b body =>
-        -- Get the variables modified in this loop for fixpoint checking
         let loopVars := getModifiedVars body
-        -- Iterate until fixpoint or fuel exhausted
         let rec loop (oldState : AbsState) (fuel : Nat) : AbsState := match fuel with
         | 0 => oldState
         | Nat.succ fuel' =>
             let bodyState := execNoWiden body oldState
-            -- Only pure join (min/max), NO widening
             let newState : AbsState := fun x => (oldState x).pureJoin (bodyState x)
             -- Check fixpoint on loop-modified variables
             -- Debug: print oldState and newState (for loopVars) before deciding fixpoint
@@ -378,8 +365,6 @@ partial def execWithSliceLLM (stmt : Stmt) (ts : TrackedState) (targetVars : Lis
             (x, v1.pureJoin v2))
         return ⟨joinedVars⟩
     | Stmt._while _b body =>
-        -- LOCAL TARGETING FIX: Only target variables that are MODIFIED in this loop
-        -- This prevents "context pollution" from unrelated loops
         let loopModifiedVars := getModifiedVars body
         let localTargets := targetVars.filter (fun v => loopModifiedVars.contains v)
 
@@ -388,14 +373,12 @@ partial def execWithSliceLLM (stmt : Stmt) (ts : TrackedState) (targetVars : Lis
         IO.println s!"[Slice-LLM] Variables modified in this loop: {loopModifiedVars}"
         IO.println s!"[Slice-LLM] Local targets (intersection): {localTargets}"
 
-        -- If no target variables are modified in this loop, just execute without LLM
         if localTargets.isEmpty then
             IO.println s!"[Slice-LLM] No target vars modified in this loop - skipping LLM, using pure exec"
             let finalState := execNoWiden stmt (ts.toAbsState)
             return finalState.toTracked targetVars
         else
-            -- GLOBAL SLICING FIX: Slice the FULL PROGRAM for local targets
-            -- This captures initialization context (e.g., i := 0) that happens before the loop
+
             let (slicedFullProgram, deps) := programSlicer fullProgram localTargets
             IO.println s!"[Slice-LLM] Dependencies from global slice: {deps}"
             IO.println s!"[Slice-LLM] Globally sliced program (includes init context):\n{slicedFullProgram.pretty 2}"
@@ -406,14 +389,12 @@ partial def execWithSliceLLM (stmt : Stmt) (ts : TrackedState) (targetVars : Lis
             let projectedTs := ts.project relevantVars
             IO.println s!"[Slice-LLM] Projected state: {projectedTs.toJson}"
 
-            -- Step 3: Build prompt with GLOBALLY sliced code (not just loop body)
             let prompt := buildSliceGuidedPrompt projectedTs slicedFullProgram relevantVars
             IO.println s!"[Slice-LLM] Calling LLM for guidance..."
 
             let response ← callOllama prompt
             IO.println s!"[Slice-LLM] LLM Response:\n{response}"
 
-            -- Step 4: Apply widening
             let (widenedTs, logs) := parseAndApplyWideningWithDebug response ts
             for log in logs do
                 IO.println log
@@ -425,7 +406,6 @@ partial def execWithSliceLLM (stmt : Stmt) (ts : TrackedState) (targetVars : Lis
 
 -- Convenience function to run slice-guided LLM analysis
 def analyzeWithSliceLLM (stmt : Stmt) (targetVars : List String) : IO TrackedState := do
-    -- Compute all variables and dependencies upfront
     let (_, allDeps) := programSlicer stmt targetVars
     let relevantVars := (targetVars ++ allDeps).foldl (fun acc x =>
         if acc.contains x then acc else x :: acc) []
@@ -437,6 +417,4 @@ def analyzeWithSliceLLM (stmt : Stmt) (targetVars : List String) : IO TrackedSta
     IO.println s!"[Slice-LLM] Full program preserved for global slicing"
     IO.println s!"[Slice-LLM] =========================================="
 
-    -- Pass the ORIGINAL stmt as fullProgram for global slicing
-    -- Each loop will slice fullProgram with its LOCAL targets to get init context
     execWithSliceLLM stmt TrackedState.empty relevantVars stmt

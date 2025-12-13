@@ -1,16 +1,6 @@
 import LeanJavaScripty.StaticAnalyzer
 
-/-
-  Tests for Widening and False Positives in Static Analysis
 
-  These tests demonstrate scenarios where:
-  1. Widening is required to ensure termination (unbounded loops)
-  2. The abstract interpreter produces false positives (over-approximations)
-  3. Path sensitivity limitations cause imprecision
-
-  A "false positive" in static analysis means the analyzer reports a possible
-  value that cannot actually occur in any concrete execution.
--/
 
 -- ============================================================================
 -- Test W1: Widening Required - Unbounded Counter
@@ -23,14 +13,7 @@ import LeanJavaScripty.StaticAnalyzer
     x := x + 1
   ```
 
-  Concrete Result: x = 100 (loop terminates when x reaches 100)
 
-  Abstract Result WITHOUT Widening: Would not terminate (keeps computing
-    [0,0] -> [0,1] -> [0,2] -> ... infinitely)
-
-  Abstract Result WITH Widening: x = [0, +∞]
-    This is a FALSE POSITIVE: x can never be > 100 in concrete execution,
-    but the analyzer says x could be any non-negative value.
 -/
 
 def testW1_stmt : Stmt :=
@@ -56,10 +39,6 @@ def testW1_absState : AbsState := exec testW1_stmt AbsState.empty
     x := x - 1
   ```
 
-  Concrete Result: x = 0
-
-  Abstract Result: x = [-∞, 100] (widening on lower bound)
-    FALSE POSITIVE: x can never be negative, but analyzer allows it.
 -/
 
 def testW2_stmt : Stmt :=
@@ -88,11 +67,6 @@ def testW2_absState : AbsState := exec testW2_stmt AbsState.empty
   z := y
   ```
 
-  Concrete Result: y = 100, z = 100 (always takes true branch since x=10)
-
-  Abstract Result: y = join([100,100], [0,0]), z = same
-    FALSE POSITIVE: The analyzer doesn't know x=10 implies the true branch,
-    so it joins both branches. z could never be 0 in reality.
 -/
 
 def testW3_stmt : Stmt :=
@@ -106,9 +80,9 @@ def testW3_stmt : Stmt :=
       (Stmt._assign "z" (Expr.var "y")))
 
 def testW3_absState : AbsState := exec testW3_stmt AbsState.empty
-#eval testW3_absState "x"  -- [10, 10]
-#eval testW3_absState "y"  -- Join of [100,100] and [0,0] - FALSE POSITIVE
-#eval testW3_absState "z"  -- Same imprecision propagates
+#eval testW3_absState "x"
+#eval testW3_absState "y"
+#eval testW3_absState "z"
 
 
 -- ============================================================================
@@ -127,11 +101,6 @@ def testW3_absState : AbsState := exec testW3_stmt AbsState.empty
   z := x - y
   ```
 
-  Concrete Result: x=1, y=1, z=0 (always takes true branch)
-
-  Abstract Result: x and y both get joined values, but correlation (x==y) is lost.
-    z = x - y could be non-zero according to analyzer.
-    FALSE POSITIVE: z is always 0 in concrete execution.
 -/
 
 def testW4_stmt : Stmt :=
@@ -208,11 +177,6 @@ def testW5_absState : AbsState := exec testW5_stmt AbsState.empty
     y := 2;
   z := y
   ```
-
-  Concrete Result: y = 2, z = 2 (false branch always taken since 5 <= 10)
-
-  Abstract Result: y = join([1,1], [2,2])
-    FALSE POSITIVE: y can never be 1, but analyzer includes it.
 -/
 
 def testW6_stmt : Stmt :=
@@ -246,12 +210,6 @@ def testW6_absState : AbsState := exec testW6_stmt AbsState.empty
     x := x + 1
   ```
 
-  Concrete Trace:
-    x=0: y=1, x=1: y=2, x=2: y=100, x=3: y=101, x=4: y=102
-  Final: x=5, y=102
-
-  Abstract Result: x=[0,+∞], y=[0,+∞]
-    FALSE POSITIVE: Loses all precision about the specific value of y.
 -/
 
 def testW7_stmt : Stmt :=
@@ -289,15 +247,6 @@ def testW7_absState : AbsState := exec testW7_stmt AbsState.empty
     x := obj2;
   y := x
   ```
-
-  In a normal allocation-site based analyzer:
-  - obj1 points to abstract location "alloc_1"
-  - obj2 points to abstract location "alloc_2"
-  - After the if-else, x could point to either alloc_1 or alloc_2
-  - This is a FALSE POSITIVE if the condition is always true/false
-
-  With integers (our simulation):
-  - x = join([1,1], [2,2]) even if condition is deterministic
 -/
 
 def testW8_stmt : Stmt :=
@@ -378,10 +327,6 @@ def testW9_absState : AbsState := exec testW9_stmt AbsState.empty
   z := y
   ```
 
-  Concrete Result: y = 1, z = 1 (true branch is dead code)
-
-  Abstract Result: y = join([999,999], [1,1])
-    FALSE POSITIVE: y can never be 999, that code is unreachable.
 -/
 
 def testW10_stmt : Stmt :=

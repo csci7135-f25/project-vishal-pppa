@@ -351,5 +351,5 @@ theorem test10_concrete : BigStep test10_stmt emptyState test10_finalState := by
 
 -- Abstract Test
 def test10_absState : AbsState := exec test10_stmt AbsState.empty
-#eval test10_absState "x"  -- Should be: [5, 5]
-#eval test10_absState "y"  -- Should be: join of [0,0], [1,1], [2,2]
+#eval test10_absState "x"
+#eval test10_absState "y"  
