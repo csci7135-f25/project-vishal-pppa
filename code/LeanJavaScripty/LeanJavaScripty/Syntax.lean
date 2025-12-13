@@ -3,7 +3,7 @@ import Std
 
 abbrev Var := String
 
--- using Int for simplicity; can be extended to other types
+-- using Int for simplicity; can be, and will be,  extended to other types
 abbrev Val := Int
 
 inductive Expr where
