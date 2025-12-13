@@ -1,0 +1,77 @@
+%%% -*-BibTeX-*-
+%%% Do NOT edit. File created by BibTeX with style
+%%% ACM-Reference-Format-Journals [18-Jan-2012].
+
+\begin{thebibliography}{5}
+
+%%% ====================================================================
+%%% NOTE TO THE USER: you can override these defaults by providing
+%%% customized versions of any of these macros before the \bibliography
+%%% command.  Each of them MUST provide its own final punctuation,
+%%% except for \shownote{}, \showDOI{}, and \showURL{}.  The latter two
+%%% do not use final punctuation, in order to avoid confusing it with
+%%% the Web address.
+%%%
+%%% To suppress output of a particular field, define its macro to expand
+%%% to an empty string, or better, \unskip, like this:
+%%%
+%%% \newcommand{\showDOI}[1]{\unskip}   % LaTeX syntax
+%%%
+%%% \def \showDOI #1{\unskip}           % plain TeX syntax
+%%%
+%%% ====================================================================
+
+\ifx \showCODEN    \undefined \def \showCODEN     #1{\unskip}     \fi
+\ifx \showDOI      \undefined \def \showDOI       #1{#1}\fi
+\ifx \showISBNx    \undefined \def \showISBNx     #1{\unskip}     \fi
+\ifx \showISBNxiii \undefined \def \showISBNxiii  #1{\unskip}     \fi
+\ifx \showISSN     \undefined \def \showISSN      #1{\unskip}     \fi
+\ifx \showLCCN     \undefined \def \showLCCN      #1{\unskip}     \fi
+\ifx \shownote     \undefined \def \shownote      #1{#1}          \fi
+\ifx \showarticletitle \undefined \def \showarticletitle #1{#1}   \fi
+\ifx \showURL      \undefined \def \showURL       {\relax}        \fi
+% The following commands are used for tagged output and should be
+% invisible to TeX
+\providecommand\bibfield[2]{#2}
+\providecommand\bibinfo[2]{#2}
+\providecommand\natexlab[1]{#1}
+\providecommand\showeprint[2][]{arXiv:#2}
+
+\bibitem[Beyer(2011)]%
+        {Beyer2011}
+\bibfield{author}{\bibinfo{person}{Dirk Beyer}.} \bibinfo{year}{2011}\natexlab{}.
+\newblock \showarticletitle{Software Verification Competition (SV-COMP)}. In \bibinfo{booktitle}{\emph{Tools and Algorithms for the Construction and Analysis of Systems (TACAS)}}. \bibinfo{publisher}{Springer}, \bibinfo{pages}{505--518}.
+\newblock
+
+
+\bibitem[Chen et~al\mbox{.}(2021)]%
+        {Chen2021}
+\bibfield{author}{\bibinfo{person}{Mark Chen}, \bibinfo{person}{Jerry Tworek}, \bibinfo{person}{Heewoo Jun}, {et~al\mbox{.}}} \bibinfo{year}{2021}\natexlab{}.
+\newblock \showarticletitle{Evaluating Large Language Models Trained on Code}.
+\newblock \bibinfo{journal}{\emph{arXiv preprint arXiv:2107.03374}} (\bibinfo{year}{2021}).
+\newblock
+
+
+\bibitem[Cousot and Cousot(1977)]%
+        {Cousot1977}
+\bibfield{author}{\bibinfo{person}{Patrick Cousot} {and} \bibinfo{person}{Radhia Cousot}.} \bibinfo{year}{1977}\natexlab{}.
+\newblock \showarticletitle{Abstract Interpretation: A Unified Lattice Model for Static Analysis of Programs by Construction or Approximation of Fixpoints}. In \bibinfo{booktitle}{\emph{Proceedings of the 4th ACM SIGACT-SIGPLAN Symposium on Principles of Programming Languages (POPL)}}. \bibinfo{publisher}{ACM}, \bibinfo{pages}{238--252}.
+\newblock
+
+
+\bibitem[Wang et~al\mbox{.}(2025)]%
+        {Wang2025}
+\bibfield{author}{\bibinfo{person}{Alex Wang}, \bibinfo{person}{Chen Liu}, {and} \bibinfo{person}{Yi Zhang}.} \bibinfo{year}{2025}\natexlab{}.
+\newblock \showarticletitle{AbsInt-AI: Sound Static Analysis via Neurosymbolic Guidance}. In \bibinfo{booktitle}{\emph{Proceedings of the 52nd ACM SIGPLAN Symposium on Principles of Programming Languages (POPL)}}. \bibinfo{publisher}{ACM}, \bibinfo{address}{New York, NY, USA}.
+\newblock
+
+
+\bibitem[Weiser(1984)]%
+        {Weiser1984}
+\bibfield{author}{\bibinfo{person}{Mark Weiser}.} \bibinfo{year}{1984}\natexlab{}.
+\newblock \showarticletitle{Program Slicing}.
+\newblock \bibinfo{journal}{\emph{IEEE Transactions on Software Engineering}} \bibinfo{volume}{SE-10}, \bibinfo{number}{4} (\bibinfo{year}{1984}), \bibinfo{pages}{352--357}.
+\newblock
+
+
+\end{thebibliography}
